@@ -27,14 +27,6 @@ public class BookView {
 		System.out.println("-1、返回上一层");
 		System.out.println("0、退出系统");
 	}
-	public void typeView(){
-		System.out.println("1、图书类型查询");
-		System.out.println("2、图书类型修改");
-		System.out.println("3、图书类型添加");
-		System.out.println("4、图书类型删除");
-		System.out.println("-1、返回上一层");
-		System.out.println("0、退出系统");
-	}
 	
 	
 }

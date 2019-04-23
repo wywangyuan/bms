@@ -7,7 +7,7 @@ public class ManagerView {
 		System.out.println("\t\t1、图书信息管理");
 		System.out.println("\t\t2、读者信息管理");
 		System.out.println("\t\t3、管理员信息管理");
-		System.out.println("\t\t4、图书类型管理");
+		System.out.println("\t\t4、读者充值");
 		System.out.println("\t\t-1、返回上一层");
 		System.out.println("\t\t0、退出系统");
 	}

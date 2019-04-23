@@ -90,6 +90,8 @@ public class ClientController {
 					returnBook(reader);
 				} else if (select == 4) {// 修改个人登录密码
 					loginPassword(reader);
+				} else if (select == 5) {
+					selectAccount(reader);
 				} else if (select == -1) {
 					System.out.println("返回上一层");
 					break;
@@ -101,66 +103,98 @@ public class ClientController {
 
 	}
 
-	private void returnBook(Reader reader) {// 归还图书
-		Reader reader1 = totalService.getReaderById(reader.getRid());
-		List<BorrowBook> borrowBooks = reader1.getBorrowBook();
+	private void selectAccount(Reader reader) {
+		System.out.println("用户名:" + reader.getRname());
+		System.out.println("账户余额为:" + reader.getMoney());
+		List<BorrowBook> borrowBooks = reader.getBorrowBook();
 		List<Book> books = new ArrayList<>();
 		for (BorrowBook borrowBook : borrowBooks) {
 			Book book = totalService.getBooksById(borrowBook.getBid());
 			books.add(book);
 		}
+		System.out.println("借阅信息:");
+		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 		for (Book book : books) {
-			System.out.println(book);
+			System.out.println(book.getBid() + "\t\t" + book.getBtid() + "\t\t"
+					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
+					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
+					+ book.getPrice());
+		}
+	}
+
+	private void returnBook(Reader reader) {// 归还图书
+		List<BorrowBook> borrowBooks = reader.getBorrowBook();
+		List<Book> books = new ArrayList<>();
+		for (BorrowBook borrowBook : borrowBooks) {
+			Book book = totalService.getBooksById(borrowBook.getBid());
+			books.add(book);
+		}
+		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
+		for (Book book : books) {
+			System.out.println(book.getBid() + "\t\t" + book.getBtid() + "\t\t"
+					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
+					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
+					+ book.getPrice());
 		}
 		int bid = this.ui.getInt("请输入要归还的图书id");
-		BorrowBook borrowBook = totalService.getBorrowBookById(
-				reader1.getRid(), bid);
+		BorrowBook borrowBook = totalService.getBorrowBookById(reader.getRid(),
+				bid);
 		Date startDate = borrowBook.getBorrowdate();
 		Date endDate = DateUtil.getCurrentDate();
 		borrowBook.setReturndate(endDate);
 		int day = DateUtil.getDay(startDate, endDate);
-		ReaderType readType = reader1.getReadType();
+		ReaderType readType = reader.getReadType();
 		Integer limitday = readType.getLimitday();
+		Book book = totalService.getBooksById(borrowBook.getBid());
 		if (day > limitday) {
 			double money = 10.0 * (day - limitday);
-			borrowBook.setMoney(money);
-			System.out.println("请缴纳罚金" + money + "元");
-			if (this.ui.getString("是否缴纳y/n").equals("y")) {
+			if (money > book.getPrice()) {
 				boolean flag = totalService.returnBook(borrowBook);
 				if (flag) {
+					totalService.updateReader(reader);
 					System.out.println("还书成功!");
+					System.out.println("因书逾期扣除押金:" + book.getPrice() + "元");
 				} else {
 					System.out.println("还书失败!");
 				}
 			} else {
-				System.out.println("还书失败!");
+				reader.setMoney(reader.getMoney() + (book.getPrice() - money));
+				boolean flag = totalService.returnBook(borrowBook);
+				if (flag) {
+					totalService.updateReader(reader);
+					System.out.println("还书成功!");
+					System.out.println("因书逾期扣除押金:" + money + "元");
+				} else {
+					System.out.println("还书失败!");
+				}
 			}
 		} else {
 			boolean flag = totalService.returnBook(borrowBook);
 			if (flag) {
+				reader.setMoney(reader.getMoney() + book.getPrice());
+				totalService.updateReader(reader);
 				System.out.println("还书成功!");
 			} else {
 				System.out.println("还书失败!");
 			}
 		}
-
 	}
 
 	private void borrowBook(Reader reader, List<Book> books) {// 借阅图书
+		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 		for (Book book : books) {
-			// System.out.println(book);
-			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 			System.out.println(book.getBid() + "\t\t" + book.getBtid() + "\t\t"
 					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
 					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
 					+ book.getPrice());
-
 		}
-		int id = this.ui.getInt("请输入要借阅的图书id");
-		for (Book book : books) {
-			if (book.getBid() == id) {
+		int bid = this.ui.getInt("请输入要借阅的图书编号:");
+		Book book = totalService.getBooksById(bid);
+		if (book.getBid() == bid) {
+			if (reader.getMoney() > book.getPrice()) {
+				reader.setMoney(reader.getMoney() - book.getPrice());
 				BorrowBook borrowBook = new BorrowBook();
-				borrowBook.setBid(id);
+				borrowBook.setBid(bid);
 				borrowBook.setRid(reader.getRid());
 				borrowBook.setBorrowdate(DateUtil.getCurrentDate());
 				List<BorrowBook> borrowBooks = new ArrayList<BorrowBook>();
@@ -172,6 +206,8 @@ public class ClientController {
 				} else {
 					System.out.println("借阅失败!");
 				}
+			} else {
+				System.out.println("卡上余额不足!");
 			}
 		}
 	}
@@ -208,24 +244,22 @@ public class ClientController {
 								deleteUser();
 							} else if (select == -1) {//
 								System.out.println("返回上一层");
+								break;
 							}
 						}
-					}else if(select==4){//图书类型管理
-						bv.typeView();
-						int select = this.ui.getInt("请选择:");
-						if(select==1){
-	
-						}else if(select==2){
-							
-						}else if(select==3){
-							
-						}else if(select==4){
-							
-						}else if(select==-1){
-							
-						}else if(select==0){
-							System.out.println("系统退出!");
-							System.exit(0);
+					} else if (select == 4) {
+						int rid = this.ui.getInt("请输入要充值的读者编号:");
+						Reader reader = totalService.getReaderById(rid);
+						while (true) {
+							if (reader != null) {
+								double money = this.ui.getDouble("请输入要充值的金额");
+								reader.setMoney(reader.getMoney() + money);
+								totalService.updateReader(reader);
+								System.out.println("充值成功!");
+								break;
+							} else {
+								System.out.println("您查询的读者不存在,请重新输入!");
+							}
 						}
 					} else if (select == 0) {// 退出系统
 						System.out.println("系统退出，欢迎再次使用");
@@ -373,7 +407,7 @@ public class ClientController {
 				updateReader();
 			} else if (select == 4) {// 删除读者
 				deleteReader();
-			} else if (select == 0) {// 返回上一层
+			} else if (select == -1) {// 返回上一层
 				break;
 			}
 		}
@@ -386,8 +420,15 @@ public class ClientController {
 			System.out.println("没有此读者");
 		} else {
 
+			System.out
+					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
 			for (Reader reader : readers) {
-				System.out.println(reader);
+				// System.out.println(reader);
+				System.out.println(reader.getRid() + "\t" + reader.getTid()
+						+ "\t" + reader.getRname() + "\t" + reader.getAge()
+						+ "\t" + reader.getSex() + "\t" + reader.getPhone()
+						+ "\t" + reader.getDept());
+
 			}
 		}
 	}
@@ -411,6 +452,7 @@ public class ClientController {
 		reader.setDept(dept);
 		reader.setTid(tid);
 		reader.setPassword(password);
+		reader.setMoney(100.0);
 		Boolean flag = totalService.addReader(reader);
 		if (flag) {
 			System.out.println("添加成功！");
@@ -423,11 +465,10 @@ public class ClientController {
 	private void updateReader() {
 		System.out.println("-------修改读者信息---------");
 		int rid = this.ui.getInt("请输入要修改的读者的编号:");
-		Reader readerById = this.totalService.getReaderById(rid);
-		if (readerById == null) {
+		Reader reader = this.totalService.getReaderById(rid);
+		if (reader == null) {
 			System.out.println("没有此读者");
 		} else {
-			Reader reader = new Reader();
 			String rname = this.ui.getString("请输入读者姓名:");
 			int age = this.ui.getInt("请输入读者年龄:");
 			String sex = this.ui.getString("请输入读者性别:");
@@ -453,12 +494,19 @@ public class ClientController {
 	private void deleteReader() {
 		System.out.println("-------删除读者---------");
 		int rid = this.ui.getInt("请输入要删除的读者的编号:");
-		Reader r = this.totalService.getReaderById(rid);
-		if (r == null) {
+		Reader reader = this.totalService.getReaderById(rid);
+		if (reader == null) {
 			System.out.println("读者不存在");
 		}
 		System.out.println("读者信息如下:");
-		System.out.println(r.toString());
+		// System.out.println(r.toString());
+		System.out
+				.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+		System.out.println(reader.getRid() + "\t\t" + reader.getTid() + "\t\t"
+				+ reader.getRname() + "\t\t" + reader.getAge() + "\t"
+				+ reader.getSex() + "\t\t" + reader.getPhone() + "\t\t"
+				+ reader.getDept());
+
 		if ("y".equals(this.ui.getString("是否确认删除?(y/n):"))) {
 			boolean flag1 = this.totalService.deleteReader(rid);
 			if (flag1) {
@@ -533,8 +581,15 @@ public class ClientController {
 	// 查询所有图书
 	private void getAllBooks() {
 		List<Book> books = this.totalService.getAllBooks();
+
+		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 		for (Book book : books) {
-			System.out.println(book);
+			// System.out.println(book);
+			System.out.println(book.getBid() + "\t\t" + book.getBtid() + "\t\t"
+					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
+					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
+					+ book.getPrice());
+
 		}
 	}
 
@@ -545,8 +600,14 @@ public class ClientController {
 		if (books == null) {
 			System.out.println("馆内没有此书");
 		} else {
+			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 			for (Book book : books) {
-				System.out.println(book);
+				// System.out.println(book);
+				System.out.println(book.getBid() + "\t\t" + book.getBtid()
+						+ "\t\t" + book.getBname() + "\t\t" + book.getPublish()
+						+ "\t" + book.getAuthor() + "\t\t" + book.getBnumber()
+						+ "\t\t" + book.getPrice());
+
 			}
 		}
 	}
@@ -558,7 +619,13 @@ public class ClientController {
 		if (book == null) {
 			System.out.println("没有此书");
 		} else {
-			System.out.println(book);
+			// System.out.println(book);
+			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
+			System.out.println(book.getBid() + "\t\t" + book.getBtid() + "\t\t"
+					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
+					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
+					+ book.getPrice());
+
 		}
 	}
 
@@ -566,8 +633,14 @@ public class ClientController {
 	private List<Book> getBooksByTypeId() {
 		Integer typeId = this.ui.getInt("请输入图书类型编号：");
 		List<Book> books = this.totalService.getBooksByTypeId(typeId);
+		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 		for (Book book : books) {
-			System.out.println(book);
+			// System.out.println(book);
+			System.out.println(book.getBid() + "\t" + book.getBtid() + "\t"
+					+ book.getBname() + "\t" + book.getPublish() + "\t"
+					+ book.getAuthor() + "\t" + book.getBnumber() + "\t"
+					+ book.getPrice());
+
 		}
 		return books;
 	}
@@ -578,8 +651,11 @@ public class ClientController {
 		if (Users == null) {
 			System.out.println("没有此管理员");
 		} else {
+			System.out.println("管理员编号\t\t管理员姓名");
 			for (User user : Users) {
-				System.out.println(user);
+				// System.out.println(user);
+				System.out.println(user.getMid() + "\t" + user.getUname());
+
 			}
 		}
 	}
@@ -591,6 +667,8 @@ public class ClientController {
 		User user = new User();
 		String uname = this.ui.getString("请输入管理员姓名:");
 		String password = this.ui.getString("请输入管理员密码:");
+		user.setUname(uname);
+		user.setPassword(password);
 		boolean flag = this.totalService.addUser(user);
 		if (flag) {
 			System.out.println("添加成功！");

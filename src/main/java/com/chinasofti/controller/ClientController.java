@@ -9,12 +9,14 @@ import com.chinasofti.bms.View.MainView;
 import com.chinasofti.bms.View.ManagerView;
 import com.chinasofti.bms.View.ReaderView;
 import com.chinasofti.bms.domain.Book;
+import com.chinasofti.bms.domain.BookType;
 import com.chinasofti.bms.domain.BorrowBook;
 import com.chinasofti.bms.domain.Reader;
 import com.chinasofti.bms.domain.ReaderType;
 import com.chinasofti.bms.domain.User;
 import com.chinasofti.bms.service.TotalService;
 import com.chinasofti.bms.util.DateUtil;
+import com.chinasofti.bms.util.StringUtil;
 import com.chinasofti.bms.util.UserInput;
 
 //bms客户端
@@ -63,46 +65,104 @@ public class ClientController {
 	private void readLogin() {
 		Reader reader = readerLogin();
 		if (reader != null) {
-			System.out.println("尊敬的读者" + reader.getRname() + "，欢迎您！");
 			while (true) {
-				rv.welcome();
-				select = this.ui.getInt("请选择：");
-				if (select == 1) {// 查询图书信息
-					selectBook();
-				} else if (select == 2) {// 借阅图书
-					rv.book();
-					select = this.ui.getInt("请选择：");
-					if (select == 1) {// 按图书类型借书
-						int typeId = this.ui.getInt("请输入图书类型id:");
-						List<Book> books = totalService
-								.getBooksByTypeId(typeId);
-						borrowBook(reader, books);
-					} else if (select == 2) {// 安图书名称借书
-						String name = this.ui.getString("请输入书名:");
-						List<Book> books = totalService.getBooksByName(name);
-						borrowBook(reader, books);
-					} else if (select == 3) {// 所有图书
-						List<Book> books = totalService.getAllBooks();
-						borrowBook(reader, books);
-					} else if (select == -1) {
-						System.out.println("返回上一层");
-						break;
+				reader = totalService.getReaderById(reader.getRid());
+				boolean flag = judgeBorrowBook(reader);// 判断借阅的图书是否逾期
+				if (!flag) {
+					System.out.println("尊敬的读者" + reader.getRname() + "，欢迎您！");
+					while (true) {
+						rv.welcome();
+						select = this.ui.getInt("请选择：");
+						if (select == 1) {// 查询图书信息
+							selectBook();
+						} else if (select == 2) {// 借阅图书
+							rv.book();
+							select = this.ui.getInt("请选择：");
+							if (select == 1) {// 按图书类型借书
+								int typeId = this.ui.getInt("请输入图书类型id:");
+								List<Book> books = totalService
+										.getBooksByTypeId(typeId);
+								borrowBook(reader, books);
+							} else if (select == 2) {// 安图书名称借书
+								String name = this.ui.getString("请输入书名:");
+								List<Book> books = totalService
+										.getBooksByName(name);
+								borrowBook(reader, books);
+							} else if (select == 3) {// 所有图书
+								List<Book> books = totalService.getAllBooks();
+								borrowBook(reader, books);
+							} else if (select == -1) {
+								System.out.println("返回上一层");
+								break;
+							}
+						} else if (select == 3) {// 归还图书
+							returnBook(reader);
+						} else if (select == 4) {// 修改个人登录密码
+							loginPassword(reader);
+						} else if (select == 5) {
+							selectAccount(reader);
+						} else if (select == 6) {// 修改个人信息
+							updateReader(reader);
+						} else if (select == -1) {
+							System.out.println("返回上一层");
+							break;
+						}
 					}
-				} else if (select == 3) {// 归还图书
+				} else {
+					System.out.println("您借阅的图书已经逾期,请归还!");
+					System.out.println("归还后方可解除账号限制!!!");
 					returnBook(reader);
-				} else if (select == 4) {// 修改个人登录密码
-					loginPassword(reader);
-				} else if (select == 5) {
-					selectAccount(reader);
-				} else if (select == -1) {
-					System.out.println("返回上一层");
-					break;
 				}
 			}
 		} else {
 			System.out.println("用户名或密码输入有误!");
 		}
 
+	}
+
+	private void updateReader(Reader reader) {
+		String rname = this.ui.getString("请输入姓名:");
+		int age = this.ui.getInt("请输入年龄:");
+		String phone = null;
+		int i = 3;
+		while (true && i > 0) {
+			phone = this.ui.getString("请输入电话(11位数字):");
+			boolean flag = StringUtil.isMobile(phone);
+			if (flag) {
+				break;
+			} else {
+				System.out.println("输入有误请重新输入!");
+				i--;
+				System.out.println("还有" + i + "次机会!");
+			}
+		}
+		String dept = this.ui.getString("请输入所在系部:");
+		reader.setAge(age);
+		reader.setDept(dept);
+		reader.setPhone(phone);
+		reader.setRname(rname);
+		totalService.updateReader(reader);
+		System.out
+				.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+		// System.out.println(reader);
+		System.out.println(reader.getRid() + "\t" + reader.getTid() + "\t\t"
+				+ reader.getRname() + "\t\t" + reader.getAge() + "\t\t"
+				+ reader.getSex() + "\t\t" + reader.getPhone() + "\t"
+				+ reader.getDept());
+		System.out.println("更新成功!");
+	}
+
+	private boolean judgeBorrowBook(Reader reader) {
+		List<BorrowBook> borrowBooks = reader.getBorrowBook();
+		for (BorrowBook borrowBook : borrowBooks) {
+			// 判断书是否超过期限未归还
+			if (DateUtil.getDay(borrowBook.getBorrowdate(),
+					DateUtil.getCurrentDate()) > reader.getReadType()
+					.getLimitday()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void selectAccount(Reader reader) {
@@ -344,6 +404,12 @@ public class ClientController {
 		String publish = this.ui.getString("请输入图书出版社：");
 		int number = this.ui.getInt("请输入要存入的图书数量：");
 		double price = this.ui.getDouble("请输入图书价格：");
+		List<BookType> allBookType = totalService.getAllBookType();
+		System.out.println("图书类型编号\t图书类型名称");
+		for (BookType bookType : allBookType) {
+			System.out.println(bookType.getBtid() + "\t\t"
+					+ bookType.getTypename());
+		}
 		int btid = this.ui.getInt("请输入图书类型编号：");
 		book.setBname(bname);
 		book.setAuthor(author);
@@ -441,7 +507,8 @@ public class ClientController {
 				int readerType = this.ui.getInt("请输入要添加的读者类型");
 				totalService.batchAddReader(count, readerType);
 				List<Reader> readers = totalService.getLastReader(count);
-				System.out.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+				System.out
+						.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
 				for (Reader reader : readers) {
 					// System.out.println(reader);
 					System.out.println(reader.getRid() + "\t" + reader.getTid()
@@ -451,7 +518,7 @@ public class ClientController {
 							+ reader.getDept());
 				}
 
-			} else if (select == -1){// 返回上一层
+			} else if (select == -1) {// 返回上一层
 				break;
 			}
 		}
@@ -483,13 +550,36 @@ public class ClientController {
 		System.out.println("----------------------------");
 		Reader reader = new Reader();
 		String rname = this.ui.getString("请输入读者姓名:");
-		int age = this.ui.getInt("请输入读者年龄:");
-		String sex = this.ui.getString("请输入读者性别:");
-		String phone = this.ui.getString("请输入读者电话:");
-		String dept = this.ui.getString("请输入读者所在系部::");
+		List<ReaderType> allReadType = totalService.getAllReadType();
+		System.out.println("读者类型编号\t读者类型名称");
+		for (ReaderType readerType : allReadType) {
+			System.out.println(readerType.getTid()+"\t\t"+readerType.getTypename());
+		}
+		int tid = this.ui.getInt("请输入读者类型编号:");
 		String password = this.ui.getString("请输入登录密码:");
 		double money = this.ui.getDouble("请输入充值的金额:");
-		int tid = this.ui.getInt("请输入读者类型编号:");
+		Integer age=null;
+		String sex=null;
+		String phone = null;
+		String dept =null;
+		String y = this.ui.getString("是否完善信息(y/n):");
+		if ("y".equals(y)) {
+			age = this.ui.getInt("请输入读者年龄:");
+			sex = this.ui.getString("请输入读者性别:");
+			int i = 3;
+			while (true && i > 0) {
+				phone = this.ui.getString("请输入电话(11位数字):");
+				boolean flag = StringUtil.isMobile(phone);
+				if (flag) {
+					break;
+				} else {
+					System.out.println("输入有误请重新输入!");
+					i--;
+					System.out.println("还有" + i + "次机会!");
+				}
+			}
+			dept = this.ui.getString("请输入读者所在系部:");
+		}
 		reader.setRname(rname);
 		reader.setAge(age);
 		reader.setSex(sex);
@@ -509,7 +599,6 @@ public class ClientController {
 					+ lastReader.getAge() + "\t\t" + lastReader.getSex()
 					+ "\t\t" + lastReader.getPhone() + "\t\t"
 					+ lastReader.getDept());
-
 		} else {
 			System.out.println("添加失败！");
 		}
@@ -528,6 +617,11 @@ public class ClientController {
 			String sex = this.ui.getString("请输入读者性别:");
 			String phone = this.ui.getString("请输入读者电话:");
 			String dept = this.ui.getString("请输入读者所在系部::");
+			List<ReaderType> allReadType = totalService.getAllReadType();
+			System.out.println("读者类型编号\t读者类型名称");
+			for (ReaderType readerType : allReadType) {
+				System.out.println(readerType.getTid()+"\t\t"+readerType.getTypename());
+			}
 			int tid = this.ui.getInt("请输入读者类型编号:");
 			reader.setRname(rname);
 			reader.setAge(age);

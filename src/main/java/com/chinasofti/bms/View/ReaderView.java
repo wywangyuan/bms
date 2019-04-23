@@ -9,6 +9,7 @@ public class ReaderView {
 		System.out.println("\t\t3、归还图书");
 		System.out.println("\t\t4、修改登录密码");
 		System.out.println("\t\t5、查询个人账户信息");
+		System.out.println("\t\t6、修改个人信息");
 		System.out.println("\t\t-1、返回上一层");
 	}
 	public void book(){

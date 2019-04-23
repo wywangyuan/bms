@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.chinasofti.bms.domain.BorrowBook;
 import com.chinasofti.bms.domain.Reader;
+import com.chinasofti.bms.domain.ReaderType;
 
 public interface ReaderService {
 	public Reader readLogin(Integer rid,String password);
@@ -51,5 +52,6 @@ public interface ReaderService {
 	public Reader getLastReader();
 	public boolean batchAddReader(int count,int readerType) ;
 	public List<Reader> getLastReader(int count);
+	public List<ReaderType> getAllReadType();
 
 }

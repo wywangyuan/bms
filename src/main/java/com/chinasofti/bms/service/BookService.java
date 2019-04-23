@@ -3,6 +3,7 @@ package com.chinasofti.bms.service;
 import java.util.List;
 
 import com.chinasofti.bms.domain.Book;
+import com.chinasofti.bms.domain.BookType;
 import com.chinasofti.bms.domain.BorrowBook;
 
 public interface BookService {
@@ -23,5 +24,6 @@ public interface BookService {
 	BorrowBook getBorrowBookById(int rid,int bid);
 	//获取添加的图书的信息
 	public Book getLastBook();
+	List<BookType> getAllBookType();
 
 }

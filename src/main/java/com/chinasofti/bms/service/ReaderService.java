@@ -45,5 +45,11 @@ public interface ReaderService {
 	 * @return
 	 */
 	public boolean returnBook(BorrowBook borrowBook);
+	/**
+	 * 获取最后插入的读者
+	 */
+	public Reader getLastReader();
+	public boolean batchAddReader(int count,int readerType) ;
+	public List<Reader> getLastReader(int count);
 
 }

@@ -21,4 +21,7 @@ public interface BookService {
 	//修改书籍
 	Boolean updateBook(Book book);
 	BorrowBook getBorrowBookById(int rid,int bid);
+	//获取添加的图书的信息
+	public Book getLastBook();
+
 }

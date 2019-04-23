@@ -44,7 +44,7 @@ public class ClientController {
 		while (true) {
 			this.mv.homeView();// 用户登录界面
 			mv.userView();
-			select = this.ui.getInt("请选择：");
+			int select = this.ui.getInt("请选择：");
 			if (select == 0) {
 				System.out.println("系统退出，欢迎再次使用！");
 				System.exit(0);
@@ -52,6 +52,8 @@ public class ClientController {
 				managerLogin();
 			} else if (select == 2) {// 读者登录
 				readLogin();
+			} else if (select == -1) {
+				System.out.println("系统退出");
 			} else {
 				System.out.println("输入有误，请重新输入");
 			}
@@ -222,7 +224,7 @@ public class ClientController {
 				System.out.println("尊敬的超级管理员" + user.getUname() + "，欢迎您！");
 				while (true) {
 					nv.aView();
-					select = this.ui.getInt("请选择：");
+					int select = this.ui.getInt("请选择：");
 					if (select == 1) {// 图书信息管理
 						// 增删改查视图
 						ManagerBook();
@@ -248,9 +250,9 @@ public class ClientController {
 							}
 						}
 					} else if (select == 4) {
-						int rid = this.ui.getInt("请输入要充值的读者编号:");
-						Reader reader = totalService.getReaderById(rid);
 						while (true) {
+							int rid = this.ui.getInt("请输入要充值的读者编号:");
+							Reader reader = totalService.getReaderById(rid);
 							if (reader != null) {
 								double money = this.ui.getDouble("请输入要充值的金额");
 								reader.setMoney(reader.getMoney() + money);
@@ -259,6 +261,7 @@ public class ClientController {
 								break;
 							} else {
 								System.out.println("您查询的读者不存在,请重新输入!");
+								break;
 							}
 						}
 					} else if (select == 0) {// 退出系统
@@ -273,14 +276,33 @@ public class ClientController {
 
 			} else {// 管理员登录
 				System.out.println("尊敬的管理员" + user.getUname() + "欢迎您！");
-				nv.mView();
-				select = this.ui.getInt("请选择：");
-				if (select == 1) {// 图书信息管理
-					ManagerBook();
-				} else if (select == 2) {// 读者信息管理
-					ManagerReader();
-				} else if (select == 0) {
-					System.out.println("系统退出");
+				while (true) {
+					nv.mView();
+					int select = this.ui.getInt("请选择：");
+					if (select == 1) {// 图书信息管理
+						ManagerBook();
+					} else if (select == 2) {// 读者信息管理
+						ManagerReader();
+					} else if (select == 3) {// 充值
+						while (true) {
+							int rid = this.ui.getInt("请输入要充值的读者编号:");
+							Reader reader = totalService.getReaderById(rid);
+							if (reader != null) {
+								double money = this.ui.getDouble("请输入要充值的金额");
+								reader.setMoney(reader.getMoney() + money);
+								totalService.updateReader(reader);
+								System.out.println("充值成功!");
+								break;
+							} else {
+								System.out.println("您查询的读者不存在,请重新输入!");
+								break;
+							}
+						}
+					} else if (select == -1) {
+						break;
+					} else if (select == 0) {
+						System.out.println("系统退出");
+					}
 				}
 			}
 		} else {
@@ -291,7 +313,7 @@ public class ClientController {
 	private void ManagerBook() {// 管理图书
 		while (true) {
 			bv.bView();
-			select = this.ui.getInt("请选择：");
+			int select = this.ui.getInt("请选择：");
 			if (select == 1) {
 				selectBook();
 			} else if (select == 2) {// 添加图书
@@ -332,6 +354,13 @@ public class ClientController {
 		Boolean flag = totalService.addBook(book);
 		if (flag) {
 			System.out.println("添加成功！");
+			Book lastBook = totalService.getLastBook();
+			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
+			System.out.println(lastBook.getBid() + "\t\t" + lastBook.getBtid()
+					+ "\t\t" + lastBook.getBname() + "\t\t"
+					+ lastBook.getPublish() + "\t" + lastBook.getAuthor()
+					+ "\t\t" + lastBook.getBnumber() + "\t\t"
+					+ lastBook.getPrice());
 		} else {
 			System.out.println("添加失败！");
 		}
@@ -398,7 +427,7 @@ public class ClientController {
 	private void ManagerReader() {// 管理读者
 		while (true) {
 			nv.readerView();
-			select = this.ui.getInt("请选择：");
+			int select = this.ui.getInt("请选择：");
 			if (select == 1) {// 查询读者信息
 				getAllReader();
 			} else if (select == 2) {// 添加读者
@@ -407,7 +436,22 @@ public class ClientController {
 				updateReader();
 			} else if (select == 4) {// 删除读者
 				deleteReader();
-			} else if (select == -1) {// 返回上一层
+			} else if (select == 5) {
+				int count = this.ui.getInt("请输入要添加的数量:");
+				int readerType = this.ui.getInt("请输入要添加的读者类型");
+				totalService.batchAddReader(count, readerType);
+				List<Reader> readers = totalService.getLastReader(count);
+				System.out.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+				for (Reader reader : readers) {
+					// System.out.println(reader);
+					System.out.println(reader.getRid() + "\t" + reader.getTid()
+							+ "\t\t" + reader.getRname() + "\t\t"
+							+ reader.getAge() + "\t\t" + reader.getSex()
+							+ "\t\t" + reader.getPhone() + "\t\t"
+							+ reader.getDept());
+				}
+
+			} else if (select == -1){// 返回上一层
 				break;
 			}
 		}
@@ -425,9 +469,9 @@ public class ClientController {
 			for (Reader reader : readers) {
 				// System.out.println(reader);
 				System.out.println(reader.getRid() + "\t" + reader.getTid()
-						+ "\t" + reader.getRname() + "\t" + reader.getAge()
-						+ "\t" + reader.getSex() + "\t" + reader.getPhone()
-						+ "\t" + reader.getDept());
+						+ "\t\t" + reader.getRname() + "\t\t" + reader.getAge()
+						+ "\t\t" + reader.getSex() + "\t\t" + reader.getPhone()
+						+ "\t\t" + reader.getDept());
 
 			}
 		}
@@ -444,6 +488,7 @@ public class ClientController {
 		String phone = this.ui.getString("请输入读者电话:");
 		String dept = this.ui.getString("请输入读者所在系部::");
 		String password = this.ui.getString("请输入登录密码:");
+		double money = this.ui.getDouble("请输入充值的金额:");
 		int tid = this.ui.getInt("请输入读者类型编号:");
 		reader.setRname(rname);
 		reader.setAge(age);
@@ -452,10 +497,19 @@ public class ClientController {
 		reader.setDept(dept);
 		reader.setTid(tid);
 		reader.setPassword(password);
-		reader.setMoney(100.0);
+		reader.setMoney(money);
 		Boolean flag = totalService.addReader(reader);
 		if (flag) {
 			System.out.println("添加成功！");
+			Reader lastReader = totalService.getLastReader();
+			System.out
+					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+			System.out.println(lastReader.getRid() + "\t" + lastReader.getTid()
+					+ "\t\t" + lastReader.getRname() + "\t\t"
+					+ lastReader.getAge() + "\t\t" + lastReader.getSex()
+					+ "\t\t" + lastReader.getPhone() + "\t\t"
+					+ lastReader.getDept());
+
 		} else {
 			System.out.println("添加失败！");
 		}
@@ -497,25 +551,26 @@ public class ClientController {
 		Reader reader = this.totalService.getReaderById(rid);
 		if (reader == null) {
 			System.out.println("读者不存在");
-		}
-		System.out.println("读者信息如下:");
-		// System.out.println(r.toString());
-		System.out
-				.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
-		System.out.println(reader.getRid() + "\t\t" + reader.getTid() + "\t\t"
-				+ reader.getRname() + "\t\t" + reader.getAge() + "\t"
-				+ reader.getSex() + "\t\t" + reader.getPhone() + "\t\t"
-				+ reader.getDept());
-
-		if ("y".equals(this.ui.getString("是否确认删除?(y/n):"))) {
-			boolean flag1 = this.totalService.deleteReader(rid);
-			if (flag1) {
-				System.out.println("删除成功！");
-			} else {
-				System.out.println("删除失败！");
-			}
 		} else {
-			System.out.println("删除取消");
+			System.out.println("读者信息如下:");
+			// System.out.println(r.toString());
+			System.out
+					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+			System.out.println(reader.getRid() + "\t" + reader.getTid() + "\t"
+					+ reader.getRname() + "\t" + reader.getAge() + "\t"
+					+ reader.getSex() + "\t" + reader.getPhone() + "\t"
+					+ reader.getDept());
+
+			if ("y".equals(this.ui.getString("是否确认删除?(y/n):"))) {
+				boolean flag1 = this.totalService.deleteReader(rid);
+				if (flag1) {
+					System.out.println("删除成功！");
+				} else {
+					System.out.println("删除失败！");
+				}
+			} else {
+				System.out.println("删除取消");
+			}
 		}
 	}
 
@@ -523,7 +578,7 @@ public class ClientController {
 		// 四种查询图书的方法
 		while (true) {
 			bv.selectView();
-			select = this.ui.getInt("请选择：");
+			int select = this.ui.getInt("请选择：");
 			if (select == 4) {// 查询所有图书
 				this.getAllBooks();
 			} else if (select == 3) {// 根据书名查书

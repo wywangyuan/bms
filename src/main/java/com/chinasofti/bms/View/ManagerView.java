@@ -21,7 +21,7 @@ public class ManagerView {
 	}
 	//管理管理员
 	public void vView(){
-		System.out.println("*****************管理员信息****************");
+		System.out.println("  =============管理员信息=============");
 		System.out.println("\t\t1、查看管理员信息");
 		System.out.println("\t\t2、添加管理员");
 		System.out.println("\t\t3、修改管理员信息");
@@ -30,7 +30,7 @@ public class ManagerView {
 	}
 	//管理图书
 	public void mbookView(){
-		System.out.println("*****************图书信息*******************");
+		System.out.println("   ==============图书信息=============");
 		System.out.println("\t\t1、查询图书");
 		System.out.println("\t\t2、添加图书信息");
 		System.out.println("\t\t3、修改图书信息");
@@ -39,7 +39,7 @@ public class ManagerView {
 	}
 	//管理读者
 	public void readerView(){
-		System.out.println("*****************读者信息********************");
+		System.out.println("   ==============读者信息=============");
 		System.out.println("\t\t1、查询读者信息");
 		System.out.println("\t\t2、添加读者");
 		System.out.println("\t\t3、修改读者信息");

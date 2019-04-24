@@ -1,5 +1,11 @@
 package com.chinasofti.controller;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +32,7 @@ public class ClientController {
 	private ManagerView nv;
 	private ReaderView rv;
 	private int select;
-
 	private UserInput ui;
-
 	public static final String IP = "10.10.49.112";
 	public static final int PORT = 12345;
 	private TotalService totalService;
@@ -83,7 +87,7 @@ public class ClientController {
 								List<Book> books = totalService
 										.getBooksByTypeId(typeId);
 								borrowBook(reader, books);
-							} else if (select == 2) {// 安图书名称借书
+							} else if (select == 2) {// 按照图书名称借书
 								String name = this.ui.getString("请输入书名:");
 								List<Book> books = totalService
 										.getBooksByName(name);
@@ -183,7 +187,7 @@ public class ClientController {
 					+ book.getPrice());
 		}
 	}
-
+//归还图书
 	private void returnBook(Reader reader) {// 归还图书
 		List<BorrowBook> borrowBooks = reader.getBorrowBook();
 		List<Book> books = new ArrayList<>();
@@ -241,7 +245,7 @@ public class ClientController {
 			}
 		}
 	}
-
+	//借阅图书
 	private void borrowBook(Reader reader, List<Book> books) {// 借阅图书
 		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 		for (Book book : books) {
@@ -382,6 +386,10 @@ public class ClientController {
 				updateBook();
 			} else if (select == 4) {// 删除图书
 				deleteBook();
+			}else if(select==5){//批量导入图书
+				insertBatchBook();
+			}else if(select==6){
+				printBook();
 			} else if (select == -1) {// 返回上一层
 				break;
 			} else if (select == 0) {
@@ -529,10 +537,16 @@ public class ClientController {
 		List<Reader> readers = this.totalService.getAllReader();
 		if (readers == null) {
 			System.out.println("没有此读者");
+			try {
+				System.out.println("按任意键继续...");
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} else {
 
 			System.out
-					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t\t所在系部");
 			for (Reader reader : readers) {
 				// System.out.println(reader);
 				System.out.println(reader.getRid() + "\t" + reader.getTid()
@@ -540,6 +554,12 @@ public class ClientController {
 						+ "\t\t" + reader.getSex() + "\t\t" + reader.getPhone()
 						+ "\t\t" + reader.getDept());
 
+			}
+			try {
+				System.out.println("按任意键继续...");
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -593,7 +613,7 @@ public class ClientController {
 			System.out.println("添加成功！");
 			Reader lastReader = totalService.getLastReader();
 			System.out
-					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t\t所在系部");
 			System.out.println(lastReader.getRid() + "\t" + lastReader.getTid()
 					+ "\t\t" + lastReader.getRname() + "\t\t"
 					+ lastReader.getAge() + "\t\t" + lastReader.getSex()
@@ -616,6 +636,18 @@ public class ClientController {
 			int age = this.ui.getInt("请输入读者年龄:");
 			String sex = this.ui.getString("请输入读者性别:");
 			String phone = this.ui.getString("请输入读者电话:");
+			int i = 3;
+			while (true && i > 0) {
+				phone = this.ui.getString("请输入电话(11位数字):");
+				boolean flag = StringUtil.isMobile(phone);
+				if (flag) {
+					break;
+				} else {
+					System.out.println("输入有误请重新输入!");
+					i--;
+					System.out.println("还有" + i + "次机会!");
+				}
+			}
 			String dept = this.ui.getString("请输入读者所在系部::");
 			List<ReaderType> allReadType = totalService.getAllReadType();
 			System.out.println("读者类型编号\t读者类型名称");
@@ -649,7 +681,7 @@ public class ClientController {
 			System.out.println("读者信息如下:");
 			// System.out.println(r.toString());
 			System.out
-					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t所在系部");
+					.println("读者编号\t\t读者类型编号\t读者姓名\t\t读者年龄\t\t读者性别\t\t读者电话\t\t\t所在系部");
 			System.out.println(reader.getRid() + "\t" + reader.getTid() + "\t"
 					+ reader.getRname() + "\t" + reader.getAge() + "\t"
 					+ reader.getSex() + "\t" + reader.getPhone() + "\t"
@@ -730,15 +762,31 @@ public class ClientController {
 	// 查询所有图书
 	private void getAllBooks() {
 		List<Book> books = this.totalService.getAllBooks();
-
-		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
-		for (Book book : books) {
+		//System.out.println("图书编号\t图书类型编号\t图书名称\t\t\t出版社\t\t\t作者\t\t\t数量\t\t价格");
+		//for (Book book : books) {
 			// System.out.println(book);
-			System.out.println(book.getBid() + "\t\t" + book.getBtid() + "\t\t"
-					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
-					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
-					+ book.getPrice());
+			/*System.out.println("  "+book.getBid() + "\t" + book.getBtid() + "\t\t"
+					+ book.getBname() + "\t\t\t" + book.getPublish() + "\t\t"
+					+ book.getAuthor() + "\t\t\t" + book.getBnumber() + "\t\t"
+					+ book.getPrice());*/
+					System.out.println("图书编号\t图书类型编号\t图书名称\t\t\t出版社\t\t作者\t\t\t数量\t\t价格");
+					for (Book book : books) {
+						System.out.println(StringUtil.format(book.getBid().toString(), 2)
+								+ StringUtil.format(book.getBtid().toString(), 10)
+								+ StringUtil.format(book.getBname(), 20)
+								+ StringUtil.format(book.getPublish(), 40)
+								+StringUtil.format(book.getAuthor(), 35)
+								+StringUtil.format(book.getBnumber().toString(), 35)
+								+StringUtil.format(book.getPrice().toString(),20)
+								);
+					}
 
+		//}
+		try {
+			System.out.println("按任意键继续...");
+			System.in.read();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -748,15 +796,27 @@ public class ClientController {
 		List<Book> books = this.totalService.getBooksByName(bname);
 		if (books == null) {
 			System.out.println("馆内没有此书");
+			try {
+				System.out.println("按任意键继续...");
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} else {
-			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
+			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t\t出版社\t\t\t作者\t\t\t数量\t\t价格");
 			for (Book book : books) {
 				// System.out.println(book);
-				System.out.println(book.getBid() + "\t\t" + book.getBtid()
-						+ "\t\t" + book.getBname() + "\t\t" + book.getPublish()
-						+ "\t" + book.getAuthor() + "\t\t" + book.getBnumber()
+				System.out.println("\t"+book.getBid() + "\t\t" + book.getBtid()
+						+ "\t\t" + book.getBname() + "\t\t\t" + book.getPublish()
+						+ "\t\t" + book.getAuthor() + "\t\t\t" + book.getBnumber()
 						+ "\t\t" + book.getPrice());
 
+			}
+			try {
+				System.out.println("按任意键继续...");
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -767,13 +827,25 @@ public class ClientController {
 		Book book = this.totalService.getBooksById(bid);
 		if (book == null) {
 			System.out.println("没有此书");
+			try {
+				System.out.println("按任意键继续...");
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} else {
 			// System.out.println(book);
-			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
-			System.out.println(book.getBid() + "\t\t" + book.getBtid() + "\t\t"
-					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
-					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
+			System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t\t出版社\t\t\t作者\t\t\t数量\t\t价格");
+			System.out.println("\t"+book.getBid() + "\t\t" + book.getBtid() + "\t\t"
+					+ book.getBname() + "\t\t\t" + book.getPublish() + "\t\t"
+					+ book.getAuthor() + "\t\t\t" + book.getBnumber() + "\t\t"
 					+ book.getPrice());
+			try {
+				System.out.println("按任意键继续...");
+				System.in.read();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 		}
 	}
@@ -782,14 +854,32 @@ public class ClientController {
 	private List<Book> getBooksByTypeId() {
 		Integer typeId = this.ui.getInt("请输入图书类型编号：");
 		List<Book> books = this.totalService.getBooksByTypeId(typeId);
-		System.out.println("图书编号\t\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
+		/*System.out.println("图书编号\t图书类型编号\t图书名称\t\t出版社\t\t作者\t\t数量\t\t价格");
 		for (Book book : books) {
 			// System.out.println(book);
-			System.out.println(book.getBid() + "\t" + book.getBtid() + "\t"
-					+ book.getBname() + "\t" + book.getPublish() + "\t"
-					+ book.getAuthor() + "\t" + book.getBnumber() + "\t"
+			System.out.println("  "+book.getBid() + "\t  " + book.getBtid() + "\t\t"
+					+ book.getBname() + "\t\t" + book.getPublish() + "\t"
+					+ book.getAuthor() + "\t\t" + book.getBnumber() + "\t\t"
 					+ book.getPrice());
 
+		}*/
+		System.out.println("图书编号\t图书类型编号\t图书名称\t\t\t出版社\t\t作者\t\t\t数量\t\t价格");
+		for (Book book : books) {
+			System.out.println(StringUtil.format(book.getBid().toString(), 2)
+					+ StringUtil.format(book.getBtid().toString(), 10)
+					+ StringUtil.format(book.getBname(), 20)
+					+ StringUtil.format(book.getPublish(), 40)
+					+StringUtil.format(book.getAuthor(), 35)
+					+StringUtil.format(book.getBnumber().toString(), 35)
+					+StringUtil.format(book.getPrice().toString(),20)
+					);
+		}
+
+		try {
+			System.out.println("按任意键继续...");
+			System.in.read();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return books;
 	}
@@ -864,5 +954,82 @@ public class ClientController {
 		} else {
 			System.out.println("删除取消");
 		}
+	}
+	//批量导入图书信息
+	private void insertBatchBook(){
+		BufferedReader br=null;
+		try {
+			String path = this.ui.getString("请输入要导入的文件名称:");
+			br = new BufferedReader(new FileReader(path));
+			Book book = new Book();
+			List<Book> list = new ArrayList<Book>();
+			String line=null;
+			while((line=br.readLine())!=null){
+				String[] str = line.split("=");
+				if("btid".equals(str[0])){
+					book.setBtid(Integer.parseInt(str[1]));
+				}else if("bname".equals(str[0])){
+					book.setBname(str[1]);
+				}else if("author".equals(str[0])){
+					book.setAuthor(str[1]);
+				}else if("publish".equals(str[0])){
+					book.setPublish(str[1]);
+				}else if("bnumber".equals(str[0])){
+					book.setBnumber(Integer.parseInt(str[1]));
+				}else if("price".equals(str[0])){
+					book.setPrice(Double.parseDouble(str[1]));
+				}
+				if(line.equals("---")){
+					list.add(book);
+				}
+			}
+			boolean flag = this.totalService.insertBatchBook(list);
+			if(flag){
+				System.out.println("导入成功!");
+			}else{
+				System.out.println("导入失败!");
+			}
+		} catch (Exception e1) {
+			System.out.println("文件不存在");
+		}
+		try {
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	//将图书信息打印到文本文档
+	private void printBook(){
+		BufferedWriter bw=null;
+		try {
+			String path = this.ui.getString("请输入要导出的文件名:");
+			bw = new BufferedWriter(new FileWriter(path));
+			List<Book> allBooks = totalService.getAllBooks();
+			bw.write("图书编号\t图书类型编号\t\t"+"      "+"图书名称\t\t\t\t\t出版社\t\t\t\t作者\t\t\t\t\t数量\t\t\t\t价格");
+			bw.newLine();
+			bw.flush();
+			for (Book book : allBooks) {
+				bw.write(StringUtil.format(book.getBid().toString(), 2)
+						+ StringUtil.format(book.getBtid().toString(), 10)
+						+ StringUtil.format(book.getBname(), 20)
+						+ StringUtil.format(book.getPublish(), 40)
+						+ StringUtil.format(book.getAuthor(), 35)
+						+ StringUtil.format(book.getBnumber().toString(), 35)
+						+ StringUtil.format(book.getPrice().toString(), 20));
+				bw.newLine();
+				bw.flush();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			bw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 }

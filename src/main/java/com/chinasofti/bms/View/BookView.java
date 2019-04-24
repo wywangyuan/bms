@@ -7,6 +7,8 @@ public class BookView {
 		System.out.println("\t\t2、添加书籍");
 		System.out.println("\t\t3、修改书籍");
 		System.out.println("\t\t4、删除书籍");
+		System.out.println("\t\t5、批量导入图书信息");
+		System.out.println("\t\t6、导出所有图书信息");
 		System.out.println("\t\t-1、返回上一层");
 		System.out.println("\t\t0、退出系统");
 	}
@@ -22,7 +24,7 @@ public class BookView {
 	}
 	//查询图书
 	public void selectView(){
-		System.out.println("************图书查询界面*************");
+		System.out.println("  =============图书查询界面=============");
 		System.out.println("\t\t1、图书编号查询");
 		System.out.println("\t\t2、图书类型查询");
 		System.out.println("\t\t3、图书名称查询");

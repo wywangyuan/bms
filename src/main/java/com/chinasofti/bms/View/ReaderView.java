@@ -13,7 +13,7 @@ public class ReaderView {
 		System.out.println("\t\t-1、返回上一层");
 	}
 	public void book(){
-		System.out.println("****************图书******************");
+		System.out.println("   ============图书=============");
 		System.out.println("\t\t1、图书类型");
 		System.out.println("\t\t2、图书名称");
 		System.out.println("\t\t3、所有图书");

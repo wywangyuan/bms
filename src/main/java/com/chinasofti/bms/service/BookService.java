@@ -16,14 +16,16 @@ public interface BookService {
 	//根据图书名称查询
 	List<Book> getBooksByName(String bname);
 	//根据id删除图书
-	Boolean deleteBook(Integer id);
+	boolean deleteBook(Integer id);
 	//添加书籍
-	Boolean addBook(Book book);
+	boolean addBook(Book book);
 	//修改书籍
-	Boolean updateBook(Book book);
+	boolean updateBook(Book book);
 	BorrowBook getBorrowBookById(int rid,int bid);
 	//获取添加的图书的信息
 	public Book getLastBook();
 	List<BookType> getAllBookType();
-
+	//从文本文档里批量导入图书信息
+	boolean insertBatchBook(List<Book> books);
+	
 }

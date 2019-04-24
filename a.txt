@@ -1,0 +1,14 @@
+btid=1
+bname=aa
+author=老舍
+publish=清华大学出版社
+bnumber=10
+price=10
+---
+btid=2
+bname=aa
+author=老舍
+publish=清华大学出版社
+bnumber=10
+price=10
+---

@@ -2,9 +2,11 @@ package com.chinasofti.controller;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Date;
 import java.util.ArrayList;
@@ -1070,33 +1072,21 @@ public class ClientController {
 
 	// 批量导入图书信息
 	private void insertBatchBook() {
-		BufferedReader br = null;
+		InputStream in = null;
+		List<Book> books = null;
 		try {
 			String path = this.ui.getString("请输入要导入的文件名称:");
-			br = new BufferedReader(new FileReader(path));
-			Book book = new Book();
-			List<Book> list = new ArrayList<Book>();
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				String[] str = line.split("=");
-				if ("btid".equals(str[0])) {
-					book.setBtid(Integer.parseInt(str[1]));
-				} else if ("bname".equals(str[0])) {
-					book.setBname(str[1]);
-				} else if ("author".equals(str[0])) {
-					book.setAuthor(str[1]);
-				} else if ("publish".equals(str[0])) {
-					book.setPublish(str[1]);
-				} else if ("bnumber".equals(str[0])) {
-					book.setBnumber(Integer.parseInt(str[1]));
-				} else if ("price".equals(str[0])) {
-					book.setPrice(Double.parseDouble(str[1]));
-				}
-				if (line.equals("---")) {
-					list.add(book);
-				}
-			}
-			boolean flag = this.totalService.insertBatchBook(list);
+			Map<String, String> fields = new HashMap<String, String>();
+			in = new FileInputStream("d://"+path+".xls");
+			fields.put("图书类型编号", "btid");
+			fields.put("图书名称", "bname");
+			fields.put("图书作者", "author");
+			fields.put("出版社", "publish");
+			fields.put("图书数量", "bnumber");
+			fields.put("图书价格", "price");
+			books = ExeclUtil.ExecltoList(in, Book.class, fields);
+			boolean flag = this.totalService.insertBatchBook(books);
+			in.close();
 			if (flag) {
 				System.out.println("导入成功!");
 			} else {
@@ -1104,11 +1094,6 @@ public class ClientController {
 			}
 		} catch (Exception e1) {
 			System.out.println("文件不存在");
-		}
-		try {
-			br.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -1121,7 +1106,8 @@ public class ClientController {
 			for (Book book : allBooks) {
 				li.add(book);
 			}
-			OutputStream out = new FileOutputStream("d://aa.xls");
+			String path = this.ui.getString("请输入要导出的文件名称：");
+			OutputStream out = new FileOutputStream("d://"+path+".xls");
 			Map<String, String> fields = new HashMap<String, String>();
 			fields.put("bid", "图书编号");
 			fields.put("btid", "图书类型编号");

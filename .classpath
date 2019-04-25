@@ -22,5 +22,11 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/poi-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-examples-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-excelant-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-schemas-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-scratchpad-4.1.0.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

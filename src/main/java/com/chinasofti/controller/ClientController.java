@@ -1,10 +1,8 @@
 package com.chinasofti.controller;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,7 +72,8 @@ public class ClientController {
 	private void readLogin() {
 		Reader reader = readerLogin();
 		if (reader != null) {
-			while (true) {
+			boolean flag2 = true;
+			while (true && flag2) {
 				reader = totalService.getReaderById(reader.getRid());
 				boolean flag = judgeBorrowBook(reader);// 判断借阅的图书是否逾期
 				if (!flag) {
@@ -140,7 +139,7 @@ public class ClientController {
 							reader = totalService
 									.getReaderById(reader.getRid());
 						} else if (select == -1) {
-							System.out.println("返回上一层");
+							flag2 = false;
 							break;
 						}
 					}
@@ -166,11 +165,14 @@ public class ClientController {
 			choose = this.ui.getInt("请输入读者性别(1.男2.女:)");
 			if (choose == 1) {
 				sex = "男";
+				break;
 			} else if (choose == 2) {
 				sex = "女";
+				break;
 			} else {
 				System.out.println("输入有误请重新输入！");
 				System.out.println("还有" + m + "次机会");
+				m--;
 			}
 		}
 		String phone = null;
@@ -405,6 +407,8 @@ public class ClientController {
 								break;
 							}
 						}
+					} else if (select == 5) {
+						ManagerbookType();
 					} else if (select == 0) {// 退出系统
 						System.out.println("系统退出，欢迎再次使用");
 						System.exit(0);
@@ -439,6 +443,8 @@ public class ClientController {
 								break;
 							}
 						}
+					} else if (select == 4) {
+						ManagerbookType();
 					} else if (select == -1) {
 						break;
 					} else if (select == 0) {
@@ -448,6 +454,55 @@ public class ClientController {
 			}
 		} else {
 			System.out.println("登录失败，请重新登录！");
+		}
+	}
+
+	private void ManagerbookType() {
+		while (true) {
+			nv.mtbookView();
+			int select = this.ui.getInt("请选择:!");
+			if (select == 1) {
+				List<BookType> allBookType = this.totalService.getAllBookType();
+				System.out.println("图书类型编号\t图书类型名称");
+				for (BookType bookType : allBookType) {
+					System.out.println(bookType.getBtid() + "\t\t"
+							+ bookType.getTypename());
+				}
+			} else if (select == 2) {
+				BookType bookType = new BookType();
+				String typename = this.ui.getString("请输入要添加的类型名称：");
+				bookType.setTypename(typename);
+				boolean flag = this.totalService.addBookType(bookType);
+				if (flag) {
+					System.out.println("添加成功！");
+				} else {
+					System.out.println("添加失败！");
+				}
+			} else if (select == 3) {
+				BookType bookType = new BookType();
+				int btid = this.ui.getInt("请输入要修改的图书类型编号：");
+				String btname = this.ui.getString("请输入图书类型名称：");
+				bookType.setBtid(btid);
+				bookType.setTypename(btname);
+				boolean flag = this.totalService.updateBookType(bookType);
+				if (flag) {
+					System.out.println("修改成功！");
+				} else {
+					System.out.println("修改失败！");
+				}
+			} else if (select == 4) {
+				int btid = this.ui.getInt("请输入要删除的图书类型编号：");
+				boolean flag = this.totalService.deleteBookType(btid);
+				if (flag) {
+					System.out.println("删除成功！");
+				} else {
+					System.out.println("删除失败！");
+				}
+			} else if (select == -1) {
+				break;
+			} else {
+				System.out.println("输入有误！");
+			}
 		}
 	}
 
@@ -666,14 +721,17 @@ public class ClientController {
 			int m = 3;
 			int choose;
 			while (true && m > 0) {
-				choose = this.ui.getInt("请输入读者性别(1.男2.女:)");
+				choose = this.ui.getInt("请输入读者性别(1.男2.女):");
 				if (choose == 1) {
 					sex = "男";
+					break;
 				} else if (choose == 2) {
 					sex = "女";
+					break;
 				} else {
 					System.out.println("输入有误请重新输入！");
 					System.out.println("还有" + m + "次机会");
+					m--;
 				}
 			}
 			int i = 3;
@@ -729,14 +787,17 @@ public class ClientController {
 			int m = 3;
 			int choose;
 			while (true && m > 0) {
-				choose = this.ui.getInt("请输入读者性别(1.男2.女:)");
+				choose = this.ui.getInt("请输入读者性别(1.男2.女):");
 				if (choose == 1) {
 					sex = "男";
+					break;
 				} else if (choose == 2) {
 					sex = "女";
+					break;
 				} else {
 					System.out.println("输入有误请重新输入！");
 					System.out.println("还有" + m + "次机会");
+					m--;
 				}
 			}
 			String phone = null;
@@ -998,7 +1059,9 @@ public class ClientController {
 			System.out.println("管理员编号\t\t管理员姓名");
 			for (User user : Users) {
 				// System.out.println(user);
-				System.out.println(user.getMid() + "\t" + user.getUname());
+				if (!user.getUname().equals("admin")) {
+					System.out.println(user.getMid() + "\t" + user.getUname());
+				}
 			}
 		}
 		try {
@@ -1057,16 +1120,17 @@ public class ClientController {
 		User userById = this.totalService.getUserById(uid);
 		if (userById == null) {
 			System.out.println("管理员不存在");
-		}
-		if ("y".equals(this.ui.getString("是否确认删除?(y/n):"))) {
-			boolean flag = this.totalService.deleteUser(uid);
-			if (flag) {
-				System.out.println("删除成功！");
-			} else {
-				System.out.println("删除失败！");
-			}
 		} else {
-			System.out.println("删除取消");
+			if ("y".equals(this.ui.getString("是否确认删除?(y/n):"))) {
+				boolean flag = this.totalService.deleteUser(uid);
+				if (flag) {
+					System.out.println("删除成功！");
+				} else {
+					System.out.println("删除失败！");
+				}
+			} else {
+				System.out.println("删除取消");
+			}
 		}
 	}
 
@@ -1077,7 +1141,7 @@ public class ClientController {
 		try {
 			String path = this.ui.getString("请输入要导入的文件名称:");
 			Map<String, String> fields = new HashMap<String, String>();
-			in = new FileInputStream("d://"+path+".xls");
+			in = new FileInputStream("d://" + path + ".xls");
 			fields.put("图书类型编号", "btid");
 			fields.put("图书名称", "bname");
 			fields.put("图书作者", "author");
@@ -1107,7 +1171,7 @@ public class ClientController {
 				li.add(book);
 			}
 			String path = this.ui.getString("请输入要导出的文件名称：");
-			OutputStream out = new FileOutputStream("d://"+path+".xls");
+			OutputStream out = new FileOutputStream("d://" + path + ".xls");
 			Map<String, String> fields = new HashMap<String, String>();
 			fields.put("bid", "图书编号");
 			fields.put("btid", "图书类型编号");
